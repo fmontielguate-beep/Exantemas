@@ -13,11 +13,19 @@ const NAV_ITEMS = [
   { id: "Prevención", label: "Prevención", icon: "fa-syringe", color: "text-teal-400", bgColor: "bg-teal-900/40" }
 ];
 
-const VerticalNav: React.FC<{onSelect: (id: string) => void, selectedId: string | null}> = ({ onSelect, selectedId }) => {
+interface NavProps {
+  onSelect: (id: string) => void;
+  selectedId: string | null;
+  activeColor: string; // Recibimos el color de acento actual
+}
+
+const VerticalNav: React.FC<NavProps> = ({ onSelect, selectedId, activeColor }) => {
   return (
     <div className="flex flex-col h-full w-64 py-6 overflow-y-auto custom-scrollbar">
       <div className="px-6 mb-8">
-        <h3 className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.3em] border-b-2 border-yellow-500/30 pb-3">Teselas del Universo</h3>
+        <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] border-b-2 transition-all duration-700 pb-3 ${selectedId ? activeColor : 'text-yellow-500'} ${selectedId ? activeColor.replace('text', 'border').replace('400', '500/30') : 'border-yellow-500/30'}`}>
+          Teselas del Universo
+        </h3>
       </div>
       {NAV_ITEMS.map((item) => {
         const active = selectedId === item.id;
@@ -36,7 +44,7 @@ const VerticalNav: React.FC<{onSelect: (id: string) => void, selectedId: string 
               {item.label}
             </span>
             {active && (
-              <div className="absolute left-0 w-1 h-6 bg-white rounded-r-full animate-pulse"></div>
+              <div className="absolute left-0 w-1 h-6 bg-white rounded-r-full animate-pulse shadow-[0_0_10px_white]"></div>
             )}
           </button>
         );
