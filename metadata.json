@@ -1,0 +1,8 @@
+{
+  "name": "Explorador Estelar del Sarampión",
+  "description": "Una aplicación educativa interactiva con temática espacial para aprender sobre el sarampión, con visualizaciones, un quiz de conocimientos y un asistente experto de IA.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
