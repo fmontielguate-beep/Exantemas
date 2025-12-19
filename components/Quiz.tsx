@@ -23,17 +23,17 @@ const Quiz: React.FC = () => {
 
   if (showResult) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 bg-emerald-950/20 overflow-y-auto">
-        <div className="p-6 bg-white/10 rounded-full border-4 border-yellow-400 mb-4 shadow-2xl">
-          <i className="fas fa-crown text-4xl text-yellow-400"></i>
+      <div className="h-full flex flex-col items-center justify-center p-8 bg-black/30 animate-in fade-in duration-700">
+        <div className="w-20 h-20 rounded-full bg-yellow-400 border-4 border-white flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(250,204,21,0.5)]">
+          <i className="fas fa-medal text-3xl text-emerald-900"></i>
         </div>
-        <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Misión Completada</h3>
-        <p className="text-emerald-400 font-black text-base mt-2 uppercase tracking-widest">Aciertos: {score}/{QUIZ_QUESTIONS.length}</p>
+        <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Misión Evaluada</h3>
+        <p className="text-emerald-300 font-black text-xl mt-1 uppercase tracking-widest">Puntuación: {score} / {QUIZ_QUESTIONS.length}</p>
         <button 
           onClick={() => { setCurrentIdx(0); setScore(0); setShowResult(false); }} 
-          className="mt-6 bg-yellow-500 text-emerald-950 px-10 py-3 rounded-full font-black uppercase hover:bg-yellow-400 transition transform hover:scale-105 shadow-xl"
+          className="mt-6 bg-white text-emerald-900 px-12 py-3 rounded-full font-black uppercase tracking-widest hover:bg-yellow-400 transition transform hover:scale-105 shadow-2xl"
         >
-          Reintentar Evaluación
+          Reiniciar Ciclo
         </button>
       </div>
     );
@@ -42,57 +42,53 @@ const Quiz: React.FC = () => {
   const q = QUIZ_QUESTIONS[currentIdx];
 
   return (
-    <div className="h-full flex flex-col p-6 max-w-6xl mx-auto w-full overflow-y-auto custom-scrollbar">
+    <div className="h-full flex flex-col p-6 md:p-8 max-w-6xl mx-auto w-full overflow-y-auto custom-scrollbar">
       {!feedback ? (
         <div className="space-y-4 md:space-y-6">
           <div className="flex items-center gap-4">
-            <span className="bg-yellow-400 text-emerald-950 px-3 py-1 rounded-lg font-black text-[10px] uppercase shrink-0">Pregunta {currentIdx + 1}</span>
-            <div className="h-1.5 flex-1 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-yellow-400 transition-all duration-500 shadow-[0_0_10px_#facc15]" style={{ width: `${((currentIdx+1)/QUIZ_QUESTIONS.length)*100}%` }}></div>
+            <span className="bg-yellow-400 text-emerald-950 px-3 py-1 rounded-lg font-black text-[10px] uppercase">CASO {currentIdx + 1}</span>
+            <div className="h-2 flex-1 bg-white/10 rounded-full overflow-hidden border border-white/5">
+              <div className="h-full bg-gradient-to-r from-yellow-400 to-emerald-400 transition-all duration-700" style={{ width: `${((currentIdx+1)/QUIZ_QUESTIONS.length)*100}%` }}></div>
             </div>
+            <span className="text-[10px] font-black text-emerald-300 uppercase opacity-60">Validación Epidemiológica</span>
           </div>
-          <h4 className="text-lg md:text-2xl font-black text-white leading-tight drop-shadow-sm">{q.q}</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-4">
+          <h4 className="text-lg md:text-2xl font-black text-white leading-tight drop-shadow-md">{q.q}</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {q.a.map((opt, i) => (
               <button
                 key={i}
                 onClick={() => handleAnswer(i)}
-                className="bg-white/5 border-2 border-emerald-400/20 hover:border-yellow-400 hover:bg-white/10 p-4 rounded-xl transition-all text-left text-xs md:text-sm font-bold flex items-center gap-4 group"
+                className="bg-emerald-800/40 border-2 border-emerald-400/20 hover:border-yellow-400 hover:bg-emerald-700/60 p-4 rounded-2xl transition-all text-left text-sm font-bold flex items-center gap-4 group shadow-lg"
               >
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-emerald-800 border-2 border-emerald-400 flex items-center justify-center text-[10px] md:text-xs font-black group-hover:bg-yellow-400 group-hover:text-emerald-950 transition-colors shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-emerald-900 border-2 border-emerald-400 flex items-center justify-center text-xs font-black group-hover:bg-yellow-400 group-hover:text-emerald-950 transition-colors shrink-0">
                   {String.fromCharCode(65 + i)}
                 </div>
-                <span className="flex-1 leading-tight">{opt}</span>
+                <span className="flex-1 text-emerald-50 leading-tight">{opt}</span>
               </button>
             ))}
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center text-center space-y-4 md:space-y-6 animate-in fade-in zoom-in duration-300 py-4">
-          <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-2xl border-4 ${feedback.correct ? 'bg-emerald-500 border-white/40' : 'bg-red-500 border-white/40'}`}>
-            <i className={`fas ${feedback.correct ? 'fa-check' : 'fa-times'} text-2xl md:text-3xl text-white`}></i>
+        <div className="flex flex-col items-center text-center space-y-4 animate-in zoom-in duration-300 py-2">
+          <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-2xl border-4 ${feedback.correct ? 'bg-yellow-400 border-white text-emerald-900' : 'bg-red-500 border-white text-white'}`}>
+            <i className={`fas ${feedback.correct ? 'fa-check-circle' : 'fa-exclamation-circle'} text-3xl`}></i>
           </div>
-          <div className="space-y-2">
-            <h5 className={`font-black uppercase text-xs tracking-widest ${feedback.correct ? 'text-emerald-400' : 'text-red-400'}`}>
-              {feedback.correct ? 'Análisis Correcto' : 'Error en Diagnóstico'}
+          <div className="space-y-1">
+            <h5 className={`font-black uppercase text-xs tracking-[0.2em] ${feedback.correct ? 'text-yellow-400' : 'text-red-400'}`}>
+              {feedback.correct ? 'Confirmación Técnica' : 'Error en el Análisis'}
             </h5>
-            <p className="text-base md:text-lg font-bold text-white max-w-2xl leading-relaxed italic px-4">
+            <p className="text-base md:text-lg font-bold text-white max-w-3xl italic leading-relaxed">
               "{feedback.msg}"
             </p>
           </div>
           <button 
             onClick={next} 
-            className="bg-white text-emerald-900 font-black px-12 py-3 rounded-full hover:bg-yellow-400 transition transform hover:scale-105 uppercase text-xs tracking-[0.2em] shadow-xl"
+            className="bg-white text-emerald-900 font-black px-14 py-3 rounded-full hover:bg-yellow-400 transition-all transform hover:scale-105 uppercase text-xs tracking-widest shadow-2xl"
           >
-            Continuar Desafío
+            Siguiente Caso <i className="fas fa-arrow-right ml-2"></i>
           </button>
         </div>
       )}
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
-      `}</style>
     </div>
   );
 };

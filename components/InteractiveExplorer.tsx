@@ -14,62 +14,50 @@ const InteractiveExplorer: React.FC<Props> = ({ onSelectItem, onNavigate, showLa
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotationRef = useRef<number>(0);
   const requestRef = useRef<number>();
-  const starsRef = useRef<{x: number, y: number, size: number, opacity: number, layer: number}[]>([]);
+  const starsRef = useRef<{x: number, y: number, size: number, opacity: number}[]>([]);
   const mousePos = useRef({ x: 0, y: 0 });
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
-  // Parámetros de escalado
-  const PLANET_RADIUS = 26;
-  const HUB_WIDTH = 170;
-  const HUB_HEIGHT = 76;
+  const PLANET_RADIUS = 24;
+  const HUB_W = 160;
+  const HUB_H = 70;
 
   useEffect(() => {
     const stars = [];
-    for (let i = 0; i < 120; i++) {
-      stars.push({
-        x: Math.random(),
-        y: Math.random(),
-        size: Math.random() * 1.5,
-        opacity: Math.random(),
-        layer: Math.floor(Math.random() * 3)
-      });
+    for (let i = 0; i < 100; i++) {
+      stars.push({ x: Math.random(), y: Math.random(), size: Math.random() * 2, opacity: Math.random() });
     }
     starsRef.current = stars;
   }, []);
 
-  const drawMosaicPlanet = (ctx: CanvasRenderingContext2D, color: string, radius: number, isHovered: boolean) => {
-    const fragments = 7;
+  const drawMosaic = (ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string, isHovered: boolean) => {
+    const fragments = 8;
     ctx.save();
-    
+    ctx.translate(x, y);
+    if (isHovered) ctx.scale(1.3, 1.3);
+
     for (let i = 0; i < fragments; i++) {
-      const angleStart = (i / fragments) * Math.PI * 2;
-      const angleEnd = ((i + 1) / fragments) * Math.PI * 2;
-      
+      const a1 = (i / fragments) * Math.PI * 2;
+      const a2 = ((i + 1) / fragments) * Math.PI * 2;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.arc(0, 0, radius, angleStart, angleEnd);
+      ctx.arc(0, 0, r, a1, a2);
       ctx.closePath();
-      
-      const brightness = 0.8 + Math.random() * 0.4;
       ctx.fillStyle = color;
-      ctx.globalAlpha = brightness;
+      ctx.globalAlpha = 0.7 + Math.random() * 0.3;
       ctx.fill();
-      
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1;
       ctx.stroke();
     }
-
-    const grad = ctx.createLinearGradient(-radius, -radius, radius, radius);
-    grad.addColorStop(0, 'rgba(255,255,255,0.3)');
-    grad.addColorStop(0.5, 'transparent');
-    grad.addColorStop(1, 'rgba(0,0,0,0.15)');
-    ctx.fillStyle = grad;
+    
+    // Brillo vidriado
+    const g = ctx.createRadialGradient(-r/2, -r/2, 0, 0, 0, r*1.2);
+    g.addColorStop(0, 'rgba(255,255,255,0.4)');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
     ctx.globalAlpha = 1;
-    ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI * 2);
-    ctx.fill();
-
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   };
 
@@ -80,176 +68,130 @@ const InteractiveExplorer: React.FC<Props> = ({ onSelectItem, onNavigate, showLa
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const time = Date.now() * 0.001;
-
-    // Órbita dinámica basada en el tamaño real del canvas
-    const orbitRadius = Math.min(canvas.width, canvas.height) * 0.36;
-
-    // Fondo Nebulosa
-    ctx.globalAlpha = 0.2;
-    const nebGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, orbitRadius * 1.5);
-    nebGrad.addColorStop(0, '#1e40af');
-    nebGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = nebGrad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.globalAlpha = 1;
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const orbitR = Math.min(canvas.width, canvas.height) * 0.35;
 
     // Estrellas
-    starsRef.current.forEach(star => {
-      ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity * 0.5})`;
-      ctx.beginPath();
-      ctx.arc(star.x * canvas.width, star.y * canvas.height, star.size, 0, Math.PI * 2);
-      ctx.fill();
+    starsRef.current.forEach(s => {
+      ctx.fillStyle = `rgba(255,255,255,${s.opacity * 0.4})`;
+      ctx.beginPath(); ctx.arc(s.x * canvas.width, s.y * canvas.height, s.size, 0, Math.PI*2); ctx.fill();
     });
 
-    // Línea de Órbita
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.setLineDash([5, 15]);
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, orbitRadius, 0, Math.PI * 2);
-    ctx.stroke();
+    // Órbita
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.setLineDash([10, 20]);
+    ctx.beginPath(); ctx.arc(cx, cy, orbitR, 0, Math.PI*2); ctx.stroke();
     ctx.setLineDash([]);
 
-    rotationRef.current += 0.0006;
+    rotationRef.current += 0.0005;
 
-    // Hub Central Mosaico reducido
+    // Hub Central
     ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = 'rgba(255,255,255,0.1)';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.beginPath();
-    ctx.roundRect(-HUB_WIDTH / 2, -HUB_HEIGHT / 2, HUB_WIDTH, HUB_HEIGHT, HUB_HEIGHT / 2);
-    ctx.fill();
+    ctx.translate(cx, cy);
+    ctx.fillStyle = 'white';
+    ctx.beginPath(); ctx.roundRect(-HUB_W/2, -HUB_H/2, HUB_W, HUB_H, 35); ctx.fill();
     ctx.restore();
 
-    // Botones del Hub
-    const drawBtn = (x: number, y: number, r: number, color: string, icon: string) => {
-      const dist = Math.hypot(mousePos.current.x - x, mousePos.current.y - y);
-      const hover = dist < r;
+    // Botones Hub
+    const drawBtn = (bx: number, by: number, br: number, bcol: string, bicon: string) => {
+      const d = Math.hypot(mousePos.current.x - bx, mousePos.current.y - by);
+      const h = d < br;
       ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(hover ? 1.15 : 1, hover ? 1.15 : 1);
-      ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.translate(bx, by);
+      if (h) ctx.scale(1.2, 1.2);
+      ctx.fillStyle = bcol;
+      ctx.beginPath(); ctx.arc(0, 0, br, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = 'white';
       ctx.font = '900 14px "Font Awesome 6 Free"';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(icon, 0, 0);
+      ctx.fillText(bicon, 0, 0);
       ctx.restore();
     };
 
-    const btnSpacing = 50;
-    drawBtn(centerX - btnSpacing, centerY, 22, '#ef4444', '\uf060');
-    drawBtn(centerX, centerY, 28, '#f59e0b', '\uf015');
-    drawBtn(centerX + btnSpacing, centerY, 22, '#10b981', '\uf061');
+    drawBtn(cx - 50, cy, 20, '#ef4444', '\uf060');
+    drawBtn(cx, cy, 26, '#f59e0b', '\uf015');
+    drawBtn(cx + 50, cy, 20, '#10b981', '\uf061');
 
-    // Planetas
-    EXPERT_KEYS.forEach((key, index) => {
-      const angle = (index / EXPERT_KEYS.length) * Math.PI * 2 + rotationRef.current;
-      const x = centerX + Math.cos(angle) * orbitRadius;
-      const y = centerY + Math.sin(angle) * orbitRadius;
-      const isHovered = hoveredKey === key;
-      const scale = isHovered ? 1.3 : 1;
+    // Planetas Mosaico
+    EXPERT_KEYS.forEach((key, i) => {
+      const ang = (i / EXPERT_KEYS.length) * Math.PI * 2 + rotationRef.current;
+      const px = cx + Math.cos(ang) * orbitR;
+      const py = cy + Math.sin(ang) * orbitR;
+      const isH = hoveredKey === key;
       const data = MEASLES_DATA[key];
-      
-      const color = data.type === 'clinical' ? '#ff1e6d' : data.type === 'diag' ? '#00b4ff' : '#ffcf00';
+      const color = data.type === 'clinical' ? '#ff006e' : data.type === 'diag' ? '#0077ff' : '#ffbe0b';
 
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(scale, scale);
-      
-      if (isHovered) {
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = color;
-      }
+      drawMosaic(ctx, px, py, PLANET_RADIUS, color, isH);
 
-      drawMosaicPlanet(ctx, color, PLANET_RADIUS, isHovered);
-
-      // Icono
+      // Iconos
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 15px "Font Awesome 6 Free"';
+      ctx.font = 'bold 14px "Font Awesome 6 Free"';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       const iconMap: any = { "Epidemiología": '\uf57d', "Incubación": '\uf251', "Pródromo": '\uf0f1', "Exantema": '\uf1da', "Recuperación": '\uf3ed', "Complicaciones": '\uf071', "Diagnóstico": '\uf0c3', "Tratamiento": '\uf484', "Prevención": '\uf48e' };
-      ctx.fillText(iconMap[key] || '\uf05a', 0, 0);
+      ctx.fillText(iconMap[key] || '\uf05a', px, py);
 
       if (showLabels) {
-        ctx.fillStyle = isHovered ? 'white' : 'rgba(255,255,255,0.7)';
-        ctx.font = isHovered ? '900 11px Inter' : '700 10px Inter';
+        ctx.fillStyle = isH ? 'white' : 'rgba(255,255,255,0.6)';
+        ctx.font = isH ? '900 11px Inter' : '700 9px Inter';
         ctx.textAlign = 'center';
-        ctx.fillText(key.toUpperCase(), 0, PLANET_RADIUS + 18);
+        ctx.fillText(key.toUpperCase(), px, py + PLANET_RADIUS + 15);
       }
-      ctx.restore();
     });
 
     requestRef.current = requestAnimationFrame(animate);
-  }, [showLabels, hoveredKey, HUB_WIDTH, HUB_HEIGHT, PLANET_RADIUS]);
+  }, [showLabels, hoveredKey]);
 
   useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current && canvasRef.current.parentElement) {
+        canvasRef.current.width = canvasRef.current.parentElement.clientWidth;
+        canvasRef.current.height = canvasRef.current.parentElement.clientHeight;
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
     requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current!);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(requestRef.current!);
+    };
   }, [animate]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const r = canvasRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
     mousePos.current = { x, y };
 
     const canvas = canvasRef.current!;
-    const orbitRadius = Math.min(canvas.width, canvas.height) * 0.36;
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const orbitR = Math.min(canvas.width, canvas.height) * 0.35;
 
     let found = null;
-    EXPERT_KEYS.forEach((key, index) => {
-      const angle = (index / EXPERT_KEYS.length) * Math.PI * 2 + rotationRef.current;
-      const px = centerX + Math.cos(angle) * orbitRadius;
-      const py = centerY + Math.sin(angle) * orbitRadius;
+    EXPERT_KEYS.forEach((key, i) => {
+      const ang = (i / EXPERT_KEYS.length) * Math.PI * 2 + rotationRef.current;
+      const px = cx + Math.cos(ang) * orbitR;
+      const py = cy + Math.sin(ang) * orbitR;
       if (Math.hypot(x - px, y - py) < PLANET_RADIUS * 1.5) found = key;
     });
     setHoveredKey(found);
   };
 
-  const handleResize = useCallback(() => {
-    if (canvasRef.current && canvasRef.current.parentElement) {
-      canvasRef.current.width = canvasRef.current.parentElement.clientWidth;
-      canvasRef.current.height = canvasRef.current.parentElement.clientHeight;
-    }
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, [handleResize]);
-
   const handleClick = () => {
-    if (hoveredKey) {
-      onSelectItem(hoveredKey);
-    } else {
-      const canvas = canvasRef.current!;
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const btnSpacing = 50;
-      
-      if (Math.hypot(mousePos.current.x - (centerX - btnSpacing), mousePos.current.y - centerY) < 22) onNavigate('prev');
-      if (Math.hypot(mousePos.current.x - centerX, mousePos.current.y - centerY) < 28) onNavigate('reset');
-      if (Math.hypot(mousePos.current.x - (centerX + btnSpacing), mousePos.current.y - centerY) < 22) onNavigate('next');
+    if (hoveredKey) onSelectItem(hoveredKey);
+    else {
+      const cx = canvasRef.current!.width / 2;
+      const cy = canvasRef.current!.height / 2;
+      if (Math.hypot(mousePos.current.x - (cx-50), mousePos.current.y - cy) < 20) onNavigate('prev');
+      if (Math.hypot(mousePos.current.x - cx, mousePos.current.y - cy) < 26) onNavigate('reset');
+      if (Math.hypot(mousePos.current.x - (cx+50), mousePos.current.y - cy) < 20) onNavigate('next');
     }
   };
 
-  return (
-    <canvas 
-      ref={canvasRef} 
-      onMouseMove={handleMouseMove}
-      onClick={handleClick}
-      className="w-full h-full cursor-pointer touch-none"
-    />
-  );
+  return <canvas ref={canvasRef} onMouseMove={handleMouseMove} onClick={handleClick} className="w-full h-full cursor-pointer" />;
 };
 
 export default InteractiveExplorer;
