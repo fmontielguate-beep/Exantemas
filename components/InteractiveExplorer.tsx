@@ -10,6 +10,19 @@ interface Props {
 
 const EXPERT_KEYS = ["Epidemiología", "Incubación", "Pródromo", "Exantema", "Recuperación", "Complicaciones", "Diagnóstico", "Tratamiento", "Prevención"];
 
+// Mapeo de colores únicos por tema
+export const TOPIC_COLORS: Record<string, string> = {
+  "Epidemiología": "#06b6d4", // Cian
+  "Incubación": "#3b82f6",    // Azul
+  "Pródromo": "#f59e0b",      // Ámbar
+  "Exantema": "#e11d48",      // Carmesí
+  "Recuperación": "#10b981",  // Esmeralda
+  "Complicaciones": "#f97316", // Naranja
+  "Diagnóstico": "#d946ef",   // Fucsia
+  "Tratamiento": "#8b5cf6",   // Violeta
+  "Prevención": "#14b8a6"     // Turquesa
+};
+
 const InteractiveExplorer: React.FC<Props> = ({ onSelectItem, onNavigate, showLabels }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotationRef = useRef<number>(0);
@@ -34,6 +47,11 @@ const InteractiveExplorer: React.FC<Props> = ({ onSelectItem, onNavigate, showLa
     const fragments = 8;
     ctx.save();
     ctx.translate(x, y);
+    
+    // Sombra de brillo (glow)
+    ctx.shadowBlur = isHovered ? 30 : 15;
+    ctx.shadowColor = color;
+
     if (isHovered) ctx.scale(1.3, 1.3);
 
     for (let i = 0; i < fragments; i++) {
@@ -46,14 +64,15 @@ const InteractiveExplorer: React.FC<Props> = ({ onSelectItem, onNavigate, showLa
       ctx.fillStyle = color;
       ctx.globalAlpha = 0.7 + Math.random() * 0.3;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
       ctx.lineWidth = 1;
       ctx.stroke();
     }
     
     // Brillo vidriado
+    ctx.shadowBlur = 0;
     const g = ctx.createRadialGradient(-r/2, -r/2, 0, 0, 0, r*1.2);
-    g.addColorStop(0, 'rgba(255,255,255,0.4)');
+    g.addColorStop(0, 'rgba(255,255,255,0.5)');
     g.addColorStop(1, 'transparent');
     ctx.fillStyle = g;
     ctx.globalAlpha = 1;
@@ -90,6 +109,8 @@ const InteractiveExplorer: React.FC<Props> = ({ onSelectItem, onNavigate, showLa
     ctx.save();
     ctx.translate(cx, cy);
     ctx.fillStyle = 'white';
+    ctx.shadowBlur = 40;
+    ctx.shadowColor = 'rgba(255,255,255,0.2)';
     ctx.beginPath(); ctx.roundRect(-HUB_W/2, -HUB_H/2, HUB_W, HUB_H, 35); ctx.fill();
     ctx.restore();
 
@@ -119,8 +140,7 @@ const InteractiveExplorer: React.FC<Props> = ({ onSelectItem, onNavigate, showLa
       const px = cx + Math.cos(ang) * orbitR;
       const py = cy + Math.sin(ang) * orbitR;
       const isH = hoveredKey === key;
-      const data = MEASLES_DATA[key];
-      const color = data.type === 'clinical' ? '#ff006e' : data.type === 'diag' ? '#0077ff' : '#ffbe0b';
+      const color = TOPIC_COLORS[key] || '#ffffff';
 
       drawMosaic(ctx, px, py, PLANET_RADIUS, color, isH);
 
@@ -132,10 +152,10 @@ const InteractiveExplorer: React.FC<Props> = ({ onSelectItem, onNavigate, showLa
       ctx.fillText(iconMap[key] || '\uf05a', px, py);
 
       if (showLabels) {
-        ctx.fillStyle = isH ? 'white' : 'rgba(255,255,255,0.6)';
+        ctx.fillStyle = isH ? 'white' : 'rgba(255,255,255,0.7)';
         ctx.font = isH ? '900 11px Inter' : '700 9px Inter';
         ctx.textAlign = 'center';
-        ctx.fillText(key.toUpperCase(), px, py + PLANET_RADIUS + 15);
+        ctx.fillText(key.toUpperCase(), px, py + PLANET_RADIUS + 18);
       }
     });
 

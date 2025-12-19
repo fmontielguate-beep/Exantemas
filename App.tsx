@@ -1,7 +1,7 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import FloatingUI from './components/FloatingUI';
-import InteractiveExplorer from './components/InteractiveExplorer';
+import InteractiveExplorer, { TOPIC_COLORS } from './components/InteractiveExplorer';
 import Quiz from './components/Quiz';
 import AIAssistant from './components/AIAssistant';
 import VerticalNav from './components/VerticalNav';
@@ -14,6 +14,34 @@ const App: React.FC = () => {
   const [showLabels, setShowLabels] = useState(true);
   const selectedData = selectedId ? MEASLES_DATA[selectedId] : null;
 
+  // Generamos dinámicamente el estilo del panel basado en el color del planeta
+  const currentTheme = useMemo(() => {
+    if (!selectedId) return { 
+      gradient: "from-slate-900 via-slate-950 to-black", 
+      accent: "text-yellow-500", 
+      bgAccent: "bg-yellow-500",
+      text: "text-orange-200" 
+    };
+
+    const color = TOPIC_COLORS[selectedId] || "#ffffff";
+    
+    // Convertimos HEX a clases de color de Tailwind aproximadas o usamos estilos en línea
+    // Para simplificar y mantener la estética, definimos un mapeo de gradientes manual por ID
+    const themeMap: Record<string, any> = {
+      "Epidemiología": { gradient: "from-cyan-950 via-slate-950 to-black", accent: "text-cyan-400", bgAccent: "bg-cyan-500", text: "text-cyan-50" },
+      "Incubación": { gradient: "from-blue-950 via-slate-950 to-black", accent: "text-blue-400", bgAccent: "bg-blue-500", text: "text-blue-50" },
+      "Pródromo": { gradient: "from-amber-950 via-slate-950 to-black", accent: "text-amber-400", bgAccent: "bg-amber-500", text: "text-amber-50" },
+      "Exantema": { gradient: "from-rose-950 via-slate-950 to-black", accent: "text-rose-400", bgAccent: "bg-rose-500", text: "text-rose-50" },
+      "Recuperación": { gradient: "from-emerald-950 via-slate-950 to-black", accent: "text-emerald-400", bgAccent: "bg-emerald-500", text: "text-emerald-50" },
+      "Complicaciones": { gradient: "from-orange-950 via-slate-950 to-black", accent: "text-orange-400", bgAccent: "bg-orange-500", text: "text-orange-50" },
+      "Diagnóstico": { gradient: "from-fuchsia-950 via-slate-950 to-black", accent: "text-fuchsia-400", bgAccent: "bg-fuchsia-500", text: "text-fuchsia-50" },
+      "Tratamiento": { gradient: "from-violet-950 via-slate-950 to-black", accent: "text-violet-400", bgAccent: "bg-violet-500", text: "text-violet-50" },
+      "Prevención": { gradient: "from-teal-950 via-slate-950 to-black", accent: "text-teal-400", bgAccent: "bg-teal-500", text: "text-teal-50" }
+    };
+
+    return themeMap[selectedId] || themeMap["Epidemiología"];
+  }, [selectedId]);
+
   const handleNavigate = useCallback((direction: 'prev' | 'next' | 'reset') => {
     if (direction === 'reset') { setSelectedId(null); return; }
     const currentIndex = selectedId ? NAV_ORDER.indexOf(selectedId) : -1;
@@ -25,7 +53,7 @@ const App: React.FC = () => {
   }, [selectedId]);
 
   return (
-    <div className="relative w-full h-screen grid grid-rows-[80px_1fr_30vh] overflow-hidden bg-slate-950 font-sans">
+    <div className="relative w-full h-screen grid grid-rows-[80px_1fr_32vh] overflow-hidden bg-slate-950 font-sans">
       <FloatingUI />
       
       {/* HEADER: Fila 1 */}
@@ -56,86 +84,108 @@ const App: React.FC = () => {
 
       {/* WORKSPACE: Fila 2 */}
       <main className="flex overflow-hidden relative">
-        {/* Nav Lateral */}
-        <aside className="w-60 bg-indigo-950/80 backdrop-blur-xl border-r-4 border-blue-500/50 shadow-2xl overflow-y-auto custom-scrollbar">
+        <aside className="w-64 bg-indigo-950/80 backdrop-blur-xl border-r-4 border-blue-500/50 shadow-2xl overflow-y-auto custom-scrollbar">
           <VerticalNav onSelect={setSelectedId} selectedId={selectedId} />
         </aside>
 
-        {/* Explorer Central */}
-        <section className="flex-1 relative bg-black/20">
-          <InteractiveExplorer 
-            onSelectItem={setSelectedId} 
-            onNavigate={handleNavigate}
-            showLabels={showLabels} 
-          />
-        </section>
+        <div className="flex-1 flex min-w-0">
+          <section className="flex-[0.45] relative bg-black/20 border-r border-white/5 overflow-hidden">
+            <InteractiveExplorer 
+              onSelectItem={setSelectedId} 
+              onNavigate={handleNavigate}
+              showLabels={showLabels} 
+            />
+          </section>
 
-        {/* Panel Info */}
-        <article className="w-[450px] bg-gradient-to-br from-orange-800/90 to-red-950/95 backdrop-blur-2xl border-l-4 border-yellow-600/50 shadow-inner overflow-y-auto custom-scrollbar">
-          {!selectedData ? (
-            <div className="h-full flex flex-col items-center justify-center p-12 text-center space-y-6">
-              <div className="w-24 h-24 rounded-2xl bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center animate-pulse">
-                <i className="fas fa-microscope text-5xl text-yellow-500/50"></i>
-              </div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Nodo de Diagnóstico</h3>
-              <p className="text-orange-200 text-sm font-bold leading-relaxed max-w-xs italic">"Cada fragmento de información es una pieza esencial para el control epidemiológico."</p>
-            </div>
-          ) : (
-            <div className="p-10 space-y-10 animate-in slide-in-from-right-10 duration-500">
-              <header className="relative">
-                <span className="absolute -top-6 -left-2 text-[60px] font-black text-white/5 select-none uppercase pointer-events-none">
-                  {selectedData.type}
-                </span>
-                <span className="inline-block px-4 py-1 rounded-md bg-white text-orange-900 text-[10px] font-black uppercase tracking-widest shadow-lg mb-4">
-                  Protocolo v.2024
-                </span>
-                <h2 className="text-5xl font-black text-white leading-[0.9] drop-shadow-2xl">{selectedData.title}</h2>
-                <div className="h-2 w-32 bg-yellow-400 rounded-full mt-6 shadow-lg shadow-orange-500/50"></div>
-              </header>
-
-              <div className="space-y-6">
-                <p className="text-xl text-orange-50 leading-relaxed font-bold text-justify tracking-tight border-l-4 border-yellow-400 pl-6 italic">
-                  {selectedData.content}
-                </p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-black/20 rounded-2xl border border-white/10 group hover:bg-black/40 transition-colors">
-                    <i className="fas fa-shield-halved text-yellow-500 mb-2"></i>
-                    <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Nivel de Riesgo</h5>
-                    <p className="text-sm font-bold text-white">ALTO - NIVEL 4</p>
-                  </div>
-                  <div className="p-4 bg-black/20 rounded-2xl border border-white/10 group hover:bg-black/40 transition-colors">
-                    <i className="fas fa-check-double text-emerald-400 mb-2"></i>
-                    <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Estado de Datos</h5>
-                    <p className="text-sm font-bold text-white">VERIFICADO</p>
+          <article className={`flex-[0.55] bg-gradient-to-br ${currentTheme.gradient} backdrop-blur-3xl border-l-4 border-yellow-600/50 shadow-[-20px_0_40px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar relative z-10 transition-all duration-700`}>
+            {!selectedData ? (
+              <div className="h-full flex flex-col items-center justify-center p-16 text-center space-y-8 animate-in fade-in duration-1000">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-yellow-500/20 blur-[50px] rounded-full"></div>
+                  <div className="w-28 h-28 rounded-3xl bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center animate-pulse relative z-10">
+                    <i className="fas fa-microscope text-6xl text-yellow-500/40"></i>
                   </div>
                 </div>
+                <div className="space-y-4">
+                  <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Nodo de Diagnóstico</h3>
+                  <p className="text-orange-200 text-base font-bold leading-relaxed max-w-sm italic opacity-80">
+                    "Cada tesela posee una identidad única. Seleccione un planeta para sincronizar el panel de datos."
+                  </p>
+                </div>
               </div>
+            ) : (
+              <div key={selectedId} className="p-12 space-y-12 animate-in slide-in-from-right-16 fade-in duration-500">
+                <header className="relative space-y-4">
+                  <div className="flex items-center gap-4">
+                    <span className={`px-4 py-1.5 rounded-lg bg-white text-slate-900 text-[10px] font-black uppercase tracking-widest shadow-xl transition-all`}>
+                      {selectedData.type.toUpperCase()}
+                    </span>
+                    <span className={`${currentTheme.accent} font-black text-[10px] uppercase tracking-widest border-b border-current opacity-70`}>TESELA ID: {selectedData.id}</span>
+                  </div>
+                  <h2 className="text-6xl font-black text-white leading-[0.85] drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] uppercase tracking-tighter">
+                    {selectedData.title}
+                  </h2>
+                  <div className={`h-2.5 w-40 ${currentTheme.bgAccent} opacity-40 rounded-full mt-8 shadow-[0_0_20px_rgba(255,255,255,0.3)]`}></div>
+                </header>
 
-              <footer className="pt-8 border-t border-white/10">
-                <button 
-                  onClick={() => setSelectedId(null)}
-                  className="w-full py-4 rounded-2xl bg-white/5 border-2 border-white/10 text-white font-black uppercase tracking-[0.3em] hover:bg-white/10 transition-all text-xs"
-                >
-                  <i className="fas fa-chevron-left mr-3"></i> Volver al Espacio
-                </button>
-              </footer>
-            </div>
-          )}
-        </article>
+                <div className="space-y-8">
+                  <div className="relative">
+                    <div className={`absolute -left-6 top-0 bottom-0 w-1.5 ${currentTheme.bgAccent} rounded-full opacity-60 shadow-[0_0_20px_currentColor]`}></div>
+                    <p className={`text-2xl ${currentTheme.text} leading-relaxed font-bold text-justify tracking-tight italic transition-colors duration-500`}>
+                      {selectedData.content}
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className={`p-6 bg-black/40 rounded-3xl border border-white/10 group hover:border-white/30 transition-all shadow-xl`}>
+                      <div className={`w-10 h-10 rounded-xl ${currentTheme.bgAccent}/20 flex items-center justify-center mb-4 transition-all duration-500`}>
+                        <i className={`fas fa-fingerprint ${currentTheme.accent}`}></i>
+                      </div>
+                      <h5 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-1">Firma Cromática</h5>
+                      <p className="text-lg font-black text-white uppercase tracking-tighter italic">Única</p>
+                    </div>
+                    <div className={`p-6 bg-black/40 rounded-3xl border border-white/10 group hover:border-white/30 transition-all shadow-xl`}>
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
+                        <i className="fas fa-check-double text-emerald-400"></i>
+                      </div>
+                      <h5 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-1">Evidencia</h5>
+                      <p className="text-lg font-black text-white">OMS/CDC 2024</p>
+                    </div>
+                  </div>
+                </div>
+
+                <footer className="pt-12 border-t border-white/10 flex flex-col gap-4">
+                  <div className={`p-6 bg-white/5 rounded-2xl border border-white/5 flex items-start gap-4`}>
+                    <i className={`fas fa-circle-info ${currentTheme.accent} mt-1`}></i>
+                    <p className="text-sm text-white/60 font-medium italic">
+                      La atmósfera visual de este nodo está sincronizada con la longitud de onda de la tesela seleccionada para facilitar la retención cognitiva.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedId(null)}
+                    className="w-full py-5 rounded-2xl bg-white/5 border-2 border-white/10 text-white font-black uppercase tracking-[0.4em] hover:bg-white/10 hover:border-white/30 transition-all text-xs group"
+                  >
+                    <i className="fas fa-chevron-left mr-3 transition-transform group-hover:-translate-x-1"></i> Desacoplar Datos
+                  </button>
+                </footer>
+              </div>
+            )}
+          </article>
+        </div>
       </main>
 
       {/* QUIZ: Fila 3 */}
-      <section className="z-30 bg-emerald-900/90 backdrop-blur-3xl border-t-4 border-emerald-400 shadow-[0_-10px_40px_rgba(0,0,0,0.8)] overflow-hidden">
+      <section className="z-30 bg-emerald-950/95 backdrop-blur-3xl border-t-4 border-emerald-400/60 shadow-[0_-10px_50px_rgba(0,0,0,0.9)] overflow-hidden">
         <Quiz />
       </section>
 
       <AIAssistant />
       
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
       `}</style>
     </div>
   );
